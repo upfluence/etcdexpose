@@ -90,9 +90,12 @@ func main() {
 		os.Exit(0)
 	}()
 
+	client := etcd.NewClient([]string{flags.Server})
+
 	watcher := etcdexpose.NewEtcdWatcher(
 		flags.Namespace,
-		[]string{flags.Server})
+		client,
+	)
 
 	go watcher.Start()
 
