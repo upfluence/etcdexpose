@@ -16,9 +16,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
+	"text/template"
 
+	"github.com/coreos/go-etcd/etcd"
 	"github.com/upfluence/etcdexpose/etcdexpose"
 )
 
@@ -59,8 +62,8 @@ func init() {
 	flagset.StringVar(&flags.Server, "server", "http://127.0.0.1:4001", "Location of the etcd server")
 	flagset.StringVar(&flags.Server, "s", "http://127.0.0.1:4001", "Location of the etcd server")
 
-	flagset.StringVar(&flags.Template, "template", "http://{}", "Template to apply")
-	flagset.StringVar(&flags.Template, "t", "http://{}", "Template to apply")
+	flagset.StringVar(&flags.Template, "template", "http://{{.Value}}", "Template to apply")
+	flagset.StringVar(&flags.Template, "t", "http://{{.Value}}", "Template to apply")
 
 	flagset.StringVar(&flags.Namespace, "namespace", "/", "Discovery directory to watch")
 	flagset.StringVar(&flags.Namespace, "n", "/", "Discovery directory to watch")
@@ -92,20 +95,28 @@ func main() {
 
 	client := etcd.NewClient([]string{flags.Server})
 
+	t := template.New("Value template")
+	t, err := t.Parse(flags.Template)
+
+	if err != nil {
+		log.Fatalf("Invalid template given")
+	}
+
+	ping := etcdexpose.NewPing()
+
 	watcher := etcdexpose.NewEtcdWatcher(
 		flags.Namespace,
 		client,
 	)
 
-	go watcher.Start()
+	handler := etcdexpose.NewSingleKeyExpose(
+		client,
+		flags.Namespace,
+		t,
+		ping,
+		flags.Key,
+	)
 
-	for {
-		select {
-		case event := <-watcher.EventChan:
-			fmt.Printf("%s", event.Action)
-		case err := <-watcher.ErrorChan:
-			fmt.Printf("Error %s", err)
-		}
-	}
-
+	runner := etcdexpose.NewRunner(watcher, handler)
+	runner.Start()
 }

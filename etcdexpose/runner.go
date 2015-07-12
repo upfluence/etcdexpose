@@ -6,14 +6,7 @@ import (
 )
 
 type Handler interface {
-	Perform(*etcd.Response)
-}
-
-type DumbHandler struct {
-}
-
-func (d *DumbHandler) Perform(e *etcd.Response) {
-	log.Printf("HI THERE")
+	Perform(*etcd.Response) error
 }
 
 type Runner struct {
@@ -34,7 +27,7 @@ func (r *Runner) Start() {
 		select {
 		case event := <-r.Watcher.EventChan:
 			log.Printf("Received a new event %s", event.Action)
-			r.Handler.Perform(event)
+			err := r.Handler.Perform(event)
 		case err := <-r.Watcher.ErrorChan:
 			log.Fatal("Error %s", err)
 		}
