@@ -1,35 +1,29 @@
 package etcdexpose
 
 import (
-	"bytes"
 	"errors"
 	"github.com/coreos/go-etcd/etcd"
 	"log"
-	"text/template"
 )
 
 type SingleKeyExpose struct {
 	client    *etcd.Client
-	template  *template.Template
+	renderer  *ValueRenderer
 	ping      *Ping
 	namespace string
 	key       string
 }
 
-type templateValue struct {
-	Value string
-}
-
 func NewSingleKeyExpose(client *etcd.Client,
 	namespace string,
-	template *template.Template,
+	renderer *ValueRenderer,
 	ping *Ping,
 	key string,
 ) *SingleKeyExpose {
 	return &SingleKeyExpose{
 		client:    client,
 		namespace: namespace,
-		template:  template,
+		renderer:  renderer,
 		ping:      ping,
 		key:       key}
 }
@@ -50,7 +44,7 @@ func (s *SingleKeyExpose) Perform(e *etcd.Response) error {
 		return errors.New("Unable to find a valid node in given namespace")
 	}
 
-	val, err := s.renderValue(pick)
+	val, err := s.renderer.Perform(pick.Value)
 
 	if err != nil {
 		return err
@@ -77,10 +71,4 @@ func (s *SingleKeyExpose) pickNode(nodes etcd.Nodes) *etcd.Node {
 		}
 	}
 	return pick
-}
-
-func (s *SingleKeyExpose) renderValue(node *etcd.Node) (string, error) {
-	b := &bytes.Buffer{}
-	err := s.template.Execute(b, &templateValue{Value: node.Value})
-	return b.String(), err
 }

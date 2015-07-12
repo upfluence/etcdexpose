@@ -19,7 +19,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"text/template"
 
 	"github.com/coreos/go-etcd/etcd"
 	"github.com/upfluence/etcdexpose/etcdexpose"
@@ -99,8 +98,7 @@ func main() {
 
 	client := etcd.NewClient([]string{flags.Server})
 
-	t := template.New("Value template")
-	t, err := t.Parse(flags.Template)
+	renderer, err := etcdexpose.NewValueRenderer(flags.Template)
 
 	if err != nil {
 		log.Fatalf("Invalid template given")
@@ -116,7 +114,7 @@ func main() {
 	handler := etcdexpose.NewSingleKeyExpose(
 		client,
 		flags.Namespace,
-		t,
+		renderer,
 		ping,
 		flags.Key,
 	)
