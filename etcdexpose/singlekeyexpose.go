@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/coreos/go-etcd/etcd"
+	"log"
 	"text/template"
 )
 
@@ -60,6 +61,8 @@ func (s *SingleKeyExpose) Perform(e *etcd.Response) error {
 	if setErr != nil {
 		return setErr
 	}
+
+	log.Printf("Updated %s to %s", s.key, val)
 
 	return nil
 }

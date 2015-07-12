@@ -35,6 +35,7 @@ var (
 		Server    string
 		Template  string
 		Namespace string
+		PingPath  string
 		Key       string
 	}{}
 )
@@ -70,6 +71,9 @@ func init() {
 
 	flagset.StringVar(&flags.Key, "key", "/key", "Key to expose")
 	flagset.StringVar(&flags.Key, "k", "/key", "key to expose")
+
+	flagset.StringVar(&flags.PingPath, "ping", "/", "Path to use on ping check")
+	flagset.StringVar(&flags.PingPath, "p", "/", "Path to use on ping check")
 }
 
 func main() {
@@ -102,7 +106,7 @@ func main() {
 		log.Fatalf("Invalid template given")
 	}
 
-	ping := etcdexpose.NewPing()
+	ping := etcdexpose.NewPing(flags.PingPath)
 
 	watcher := etcdexpose.NewEtcdWatcher(
 		flags.Namespace,
