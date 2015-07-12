@@ -28,6 +28,9 @@ func (r *Runner) Start() {
 		case event := <-r.Watcher.EventChan:
 			log.Printf("Received a new event %s", event.Action)
 			err := r.Handler.Perform(event)
+			if err != nil {
+				log.Print(err)
+			}
 		case err := <-r.Watcher.ErrorChan:
 			log.Fatal("Error %s", err)
 		}
