@@ -24,7 +24,7 @@ func NewEtcdClient(
 }
 
 func (e *EtcdClient) ReadNamespace() (*etcd.Response, error) {
-	return e.client.Get(e.namespace, false, false)
+	return e.client.Get(e.namespace, true, false)
 }
 
 func (e *EtcdClient) WriteValue(value string) (*etcd.Response, error) {
