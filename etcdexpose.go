@@ -25,7 +25,7 @@ import (
 	"github.com/upfluence/etcdexpose/etcdexpose"
 )
 
-const currentVersion = "0.0.1"
+const currentVersion = "0.0.2"
 
 var (
 	flagset = flag.NewFlagSet("etcdexpose", flag.ExitOnError)
