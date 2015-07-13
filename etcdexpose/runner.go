@@ -31,6 +31,7 @@ func (r *Runner) Start() {
 			if err != nil {
 				log.Print(err)
 			}
+			log.Print("Processed event")
 		case err := <-r.Watcher.ErrorChan:
 			log.Fatal("Error %s", err)
 		}

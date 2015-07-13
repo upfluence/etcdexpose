@@ -106,18 +106,33 @@ func main() {
 
 	ping := etcdexpose.NewPing(flags.PingPath)
 
+	namespace_client := etcdexpose.NewEtcdClient(
+		client,
+		flags.Namespace,
+		flags.Key,
+	)
+
 	watcher := etcdexpose.NewEtcdWatcher(
 		flags.Namespace,
 		client,
 	)
 
-	handler := etcdexpose.NewSingleKeyExpose(
-		client,
-		flags.Namespace,
-		renderer,
-		ping,
-		flags.Key,
-	)
+	var handler etcdexpose.Handler = nil
+
+	if flags.All {
+		handler = etcdexpose.NewMutlipleValueExpose(
+			namespace_client,
+			renderer,
+			ping,
+		)
+
+	} else {
+		handler = etcdexpose.NewSingleKeyExpose(
+			namespace_client,
+			renderer,
+			ping,
+		)
+	}
 
 	runner := etcdexpose.NewRunner(watcher, handler)
 	runner.Start()

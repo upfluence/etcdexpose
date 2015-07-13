@@ -3,35 +3,29 @@ package etcdexpose
 import (
 	"errors"
 	"github.com/coreos/go-etcd/etcd"
-	"log"
 	"strings"
 )
 
 type MultipleValueExpose struct {
-	client    *etcd.Client
-	renderer  *ValueRenderer
-	ping      *Ping
-	namespace string
-	key       string
+	client   *EtcdClient
+	renderer *ValueRenderer
+	ping     *Ping
 }
 
-func NewMutlipleValueExpose(client *etcd.Client,
+func NewMutlipleValueExpose(
+	client *EtcdClient,
 	renderer *ValueRenderer,
 	ping *Ping,
-	namespace string,
-	key string,
 ) *MultipleValueExpose {
 	return &MultipleValueExpose{
-		client:    client,
-		namespace: namespace,
-		renderer:  renderer,
-		ping:      ping,
-		key:       key,
+		client:   client,
+		renderer: renderer,
+		ping:     ping,
 	}
 }
 
 func (m *MultipleValueExpose) Perform(e *etcd.Response) error {
-	resp, err := m.client.Get(m.namespace, false, false)
+	resp, err := m.client.ReadNamespace()
 	if err != nil {
 		return err
 	}
@@ -52,13 +46,11 @@ func (m *MultipleValueExpose) Perform(e *etcd.Response) error {
 		return err
 	}
 
-	_, setErr := m.client.Set(m.key, val, 0)
+	_, setErr := m.client.WriteValue(val)
 
 	if setErr != nil {
 		return setErr
 	}
-
-	log.Printf("Updated %s to %s", m.key, val)
 
 	return nil
 }

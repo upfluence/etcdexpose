@@ -3,33 +3,28 @@ package etcdexpose
 import (
 	"errors"
 	"github.com/coreos/go-etcd/etcd"
-	"log"
 )
 
 type SingleKeyExpose struct {
-	client    *etcd.Client
-	renderer  *ValueRenderer
-	ping      *Ping
-	namespace string
-	key       string
+	client   *EtcdClient
+	renderer *ValueRenderer
+	ping     *Ping
 }
 
-func NewSingleKeyExpose(client *etcd.Client,
-	namespace string,
+func NewSingleKeyExpose(
+	client *EtcdClient,
 	renderer *ValueRenderer,
 	ping *Ping,
-	key string,
 ) *SingleKeyExpose {
 	return &SingleKeyExpose{
-		client:    client,
-		namespace: namespace,
-		renderer:  renderer,
-		ping:      ping,
-		key:       key}
+		client:   client,
+		renderer: renderer,
+		ping:     ping,
+	}
 }
 
 func (s *SingleKeyExpose) Perform(e *etcd.Response) error {
-	resp, err := s.client.Get(s.namespace, false, false)
+	resp, err := s.client.ReadNamespace()
 	if err != nil {
 		return err
 	}
@@ -50,13 +45,11 @@ func (s *SingleKeyExpose) Perform(e *etcd.Response) error {
 		return err
 	}
 
-	_, setErr := s.client.Set(s.key, val, 0)
+	_, setErr := s.client.WriteValue(val)
 
 	if setErr != nil {
 		return setErr
 	}
-
-	log.Printf("Updated %s to %s", s.key, val)
 
 	return nil
 }
