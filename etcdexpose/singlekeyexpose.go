@@ -23,7 +23,7 @@ func NewSingleKeyExpose(
 	}
 }
 
-func (s *SingleKeyExpose) Perform(e *etcd.Response) error {
+func (s *SingleKeyExpose) Perform() error {
 	resp, err := s.client.ReadNamespace()
 	if err != nil {
 		return err

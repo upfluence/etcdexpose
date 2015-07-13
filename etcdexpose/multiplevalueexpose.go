@@ -24,7 +24,7 @@ func NewMutlipleValueExpose(
 	}
 }
 
-func (m *MultipleValueExpose) Perform(e *etcd.Response) error {
+func (m *MultipleValueExpose) Perform() error {
 	resp, err := m.client.ReadNamespace()
 	if err != nil {
 		return err

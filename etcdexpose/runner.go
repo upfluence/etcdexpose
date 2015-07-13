@@ -1,12 +1,11 @@
 package etcdexpose
 
 import (
-	"github.com/coreos/go-etcd/etcd"
 	"log"
 )
 
 type Handler interface {
-	Perform(*etcd.Response) error
+	Perform() error
 }
 
 type Runner struct {
@@ -27,7 +26,7 @@ func (r *Runner) Start() {
 		select {
 		case event := <-r.Watcher.EventChan:
 			log.Printf("Received a new event %s", event.Action)
-			err := r.Handler.Perform(event)
+			err := r.Handler.Perform()
 			if err != nil {
 				log.Print(err)
 			}
