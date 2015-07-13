@@ -31,7 +31,7 @@ var (
 	flagset = flag.NewFlagSet("etcdexpose", flag.ExitOnError)
 	flags   = struct {
 		Version    bool
-		All        bool
+		Multiple   bool
 		Server     string
 		Template   string
 		Namespace  string
@@ -59,8 +59,8 @@ func init() {
 	flagset.BoolVar(&flags.Version, "version", false, "Print the version and exit")
 	flagset.BoolVar(&flags.Version, "v", false, "Print the version and exit")
 
-	flagset.BoolVar(&flags.All, "all", false, "Expose all registered keys")
-	flagset.BoolVar(&flags.All, "a", false, "Expose all registered keys")
+	flagset.BoolVar(&flags.Multiple, "multiple", false, "Expose all registered keys")
+	flagset.BoolVar(&flags.Multiple, "m", false, "Expose all registered keys")
 
 	flagset.StringVar(&flags.Server, "server", "http://127.0.0.1:4001", "Location of the etcd server")
 	flagset.StringVar(&flags.Server, "s", "http://127.0.0.1:4001", "Location of the etcd server")
@@ -129,7 +129,7 @@ func main() {
 
 	var handler etcdexpose.Handler = nil
 
-	if flags.All {
+	if flags.Multiple {
 		handler = etcdexpose.NewMutlipleValueExpose(
 			namespace_client,
 			renderer,
