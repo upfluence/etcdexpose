@@ -38,6 +38,7 @@ var (
 		HealthPath string
 		Key        string
 		Interval   int
+		Ttl        uint64
 	}{}
 )
 
@@ -79,6 +80,8 @@ func init() {
 	flagset.IntVar(&flags.Interval, "interval", 0, "Perform an update at regular interval if > 0")
 	flagset.IntVar(&flags.Interval, "i", 0, "Perform an update at regulat interfal if > 0")
 
+	flagset.Uint64Var(&flags.Ttl, "ttl", 0, "Key time to live")
+
 }
 
 func main() {
@@ -116,6 +119,7 @@ func main() {
 		client,
 		flags.Namespace,
 		flags.Key,
+		flags.Ttl,
 	)
 
 	etcdWatcher := etcdexpose.NewEtcdWatcher(
