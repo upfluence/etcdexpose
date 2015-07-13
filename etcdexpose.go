@@ -19,6 +19,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/coreos/go-etcd/etcd"
 	"github.com/upfluence/etcdexpose/etcdexpose"
@@ -36,6 +37,7 @@ var (
 		Namespace string
 		PingPath  string
 		Key       string
+		Interval  int
 	}{}
 )
 
@@ -73,6 +75,10 @@ func init() {
 
 	flagset.StringVar(&flags.PingPath, "ping", "/", "Path to use on ping check")
 	flagset.StringVar(&flags.PingPath, "p", "/", "Path to use on ping check")
+
+	flagset.IntVar(&flags.Interval, "interval", 0, "Perform an update at regular interval if > 0")
+	flagset.IntVar(&flags.Interval, "i", 0, "Perform an update at regulat interfal if > 0")
+
 }
 
 func main() {
@@ -112,7 +118,7 @@ func main() {
 		flags.Key,
 	)
 
-	etcd_watcher := etcdexpose.NewEtcdWatcher(
+	etcdWatcher := etcdexpose.NewEtcdWatcher(
 		flags.Namespace,
 		client,
 	)
@@ -135,6 +141,16 @@ func main() {
 	}
 
 	runner := etcdexpose.NewRunner(handler)
-	runner.AddWatcher(etcd_watcher)
+	runner.AddWatcher(etcdWatcher)
+
+	if flags.Interval > 0 {
+		timeWatcher := etcdexpose.NewTimeWatcher(
+			time.Duration(flags.Interval),
+			time.Second,
+		)
+
+		runner.AddWatcher(timeWatcher)
+	}
+
 	runner.Start()
 }

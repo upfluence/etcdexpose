@@ -10,7 +10,6 @@ type Handler interface {
 
 type Watcher interface {
 	Start(eventChan chan bool, failureChan chan error)
-	Stop()
 }
 
 type Runner struct {
@@ -49,11 +48,5 @@ func (r *Runner) Start() {
 		case err := <-failureChan:
 			log.Fatal("Error %s", err)
 		}
-	}
-}
-
-func (r *Runner) Stop() {
-	for _, watcher := range r.watchers {
-		watcher.Stop()
 	}
 }

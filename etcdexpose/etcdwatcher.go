@@ -6,18 +6,14 @@ import (
 )
 
 type EtcdWatcher struct {
-	Namespace       string
-	client          *etcd.Client
-	stopChan        chan bool
-	convertStopChan chan bool
+	Namespace string
+	client    *etcd.Client
 }
 
 func NewEtcdWatcher(namespace string, cli *etcd.Client) *EtcdWatcher {
 	return &EtcdWatcher{
-		Namespace:       namespace,
-		client:          cli,
-		stopChan:        make(chan bool),
-		convertStopChan: make(chan bool),
+		Namespace: namespace,
+		client:    cli,
 	}
 }
 
@@ -30,14 +26,13 @@ func (e *EtcdWatcher) Start(eventChan chan bool, errorChan chan error) {
 	go func(
 		respChan chan *etcd.Response,
 		eventChan chan bool,
-		stopChan chan bool,
 	) {
 		for {
 			<-respChan
 			eventChan <- true
 
 		}
-	}(respChan, eventChan, e.convertStopChan)
+	}(respChan, eventChan)
 
 	for {
 		_, err := e.client.Watch(
@@ -45,12 +40,7 @@ func (e *EtcdWatcher) Start(eventChan chan bool, errorChan chan error) {
 			0,
 			true,
 			respChan,
-			e.stopChan)
+			nil)
 		errorChan <- err
 	}
-}
-
-func (e *EtcdWatcher) Stop() {
-	e.stopChan <- true
-	e.convertStopChan <- true
 }
