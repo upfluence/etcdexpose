@@ -30,14 +30,14 @@ const currentVersion = "0.0.2"
 var (
 	flagset = flag.NewFlagSet("etcdexpose", flag.ExitOnError)
 	flags   = struct {
-		Version   bool
-		All       bool
-		Server    string
-		Template  string
-		Namespace string
-		PingPath  string
-		Key       string
-		Interval  int
+		Version    bool
+		All        bool
+		Server     string
+		Template   string
+		Namespace  string
+		HealthPath string
+		Key        string
+		Interval   int
 	}{}
 )
 
@@ -73,8 +73,8 @@ func init() {
 	flagset.StringVar(&flags.Key, "key", "/key", "Key to expose")
 	flagset.StringVar(&flags.Key, "k", "/key", "key to expose")
 
-	flagset.StringVar(&flags.PingPath, "ping", "/", "Path to use on ping check")
-	flagset.StringVar(&flags.PingPath, "p", "/", "Path to use on ping check")
+	flagset.StringVar(&flags.HealthPath, "health-check", "/", "Path to use to perform healthCheck")
+	flagset.StringVar(&flags.HealthPath, "h", "/", "Path to use to perform healthCheck")
 
 	flagset.IntVar(&flags.Interval, "interval", 0, "Perform an update at regular interval if > 0")
 	flagset.IntVar(&flags.Interval, "i", 0, "Perform an update at regulat interfal if > 0")
@@ -110,7 +110,7 @@ func main() {
 		log.Fatalf("Invalid template given")
 	}
 
-	healthCheck := etcdexpose.NewHealthCheck(flags.PingPath)
+	healthCheck := etcdexpose.NewHealthCheck(flags.HealthPath)
 
 	namespace_client := etcdexpose.NewEtcdClient(
 		client,
