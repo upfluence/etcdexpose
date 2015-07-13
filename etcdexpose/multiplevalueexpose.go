@@ -30,13 +30,10 @@ func (m *MultipleValueExpose) Perform() error {
 		return err
 	}
 
-	if resp.Node.Nodes.Len() == 0 {
-		return errors.New("No key to expose in given namespace")
-	}
-
 	picks := m.filterNodes(resp.Node.Nodes)
 
 	if picks.Len() == 0 {
+		m.client.RemoveKey()
 		return errors.New("Failed to find any valid node in given namespace")
 	}
 

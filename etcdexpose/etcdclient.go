@@ -30,6 +30,14 @@ func (e *EtcdClient) ReadNamespace() (*etcd.Response, error) {
 	return e.client.Get(e.namespace, true, false)
 }
 
+func (e *EtcdClient) RemoveKey() (*etcd.Response, error) {
+	resp, err := e.client.Delete(e.key, false)
+	if err == nil {
+		log.Printf("Removed %s", e.key)
+	}
+	return resp, err
+}
+
 func (e *EtcdClient) WriteValue(value string) (*etcd.Response, error) {
 	resp, err := e.client.Set(e.key, value, e.ttl)
 	if err == nil {
