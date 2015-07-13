@@ -14,26 +14,34 @@ type Watcher interface {
 }
 
 type Runner struct {
-	Watcher Watcher
-	Handler Handler
+	handler  Handler
+	watchers []Watcher
 }
 
-func NewRunner(watcher Watcher, handler Handler) *Runner {
+func NewRunner(handler Handler) *Runner {
 	return &Runner{
-		Watcher: watcher,
-		Handler: handler,
+		watchers: []Watcher{},
+		handler:  handler,
 	}
+}
+
+func (r *Runner) AddWatcher(watcher Watcher) {
+	r.watchers = append(r.watchers, watcher)
 }
 
 func (r *Runner) Start() {
 	eventChan := make(chan bool)
 	failureChan := make(chan error)
-	go r.Watcher.Start(eventChan, failureChan)
+
+	for _, watcher := range r.watchers {
+		go watcher.Start(eventChan, failureChan)
+	}
+
 	for {
 		select {
 		case <-eventChan:
 			log.Printf("Received a new event ")
-			err := r.Handler.Perform()
+			err := r.handler.Perform()
 			if err != nil {
 				log.Print(err)
 			}
@@ -41,5 +49,11 @@ func (r *Runner) Start() {
 		case err := <-failureChan:
 			log.Fatal("Error %s", err)
 		}
+	}
+}
+
+func (r *Runner) Stop() {
+	for _, watcher := range r.watchers {
+		watcher.Stop()
 	}
 }

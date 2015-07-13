@@ -112,7 +112,7 @@ func main() {
 		flags.Key,
 	)
 
-	watcher := etcdexpose.NewEtcdWatcher(
+	etcd_watcher := etcdexpose.NewEtcdWatcher(
 		flags.Namespace,
 		client,
 	)
@@ -134,6 +134,7 @@ func main() {
 		)
 	}
 
-	runner := etcdexpose.NewRunner(watcher, handler)
+	runner := etcdexpose.NewRunner(handler)
+	runner.AddWatcher(etcd_watcher)
 	runner.Start()
 }
