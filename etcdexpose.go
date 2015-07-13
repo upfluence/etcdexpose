@@ -39,6 +39,8 @@ var (
 		Key        string
 		Interval   uint
 		Ttl        uint64
+		Port       uint
+		CheckPort  uint
 	}{}
 )
 
@@ -65,8 +67,8 @@ func init() {
 	flagset.StringVar(&flags.Server, "server", "http://127.0.0.1:4001", "Location of the etcd server")
 	flagset.StringVar(&flags.Server, "s", "http://127.0.0.1:4001", "Location of the etcd server")
 
-	flagset.StringVar(&flags.Template, "template", "http://{{.Value}}", "Template to apply")
-	flagset.StringVar(&flags.Template, "t", "http://{{.Value}}", "Template to apply")
+	flagset.StringVar(&flags.Template, "template", "http://{{.Value}}:{{.Port}}", "Template to apply")
+	flagset.StringVar(&flags.Template, "t", "http://{{.Value}}:{{.Port}}", "Template to apply")
 
 	flagset.StringVar(&flags.Namespace, "namespace", "/", "Discovery directory to watch")
 	flagset.StringVar(&flags.Namespace, "n", "/", "Discovery directory to watch")
@@ -82,6 +84,9 @@ func init() {
 
 	flagset.Uint64Var(&flags.Ttl, "ttl", 0, "Key time to live")
 
+	flagset.UintVar(&flags.Port, "port", 0, "Port to expose")
+	flagset.UintVar(&flags.Port, "-p", 0, "Port to expose")
+	flagset.UintVar(&flags.CheckPort, "check-port", flags.Port, "Check port to use")
 }
 
 func main() {
@@ -91,6 +96,11 @@ func main() {
 	if len(os.Args) < 2 {
 		flagset.Usage()
 		os.Exit(0)
+	}
+
+	if flags.Port == 0 {
+		fmt.Println("You must provide a valid port to expose with -p flag")
+		os.Exit(1)
 	}
 
 	if flags.Version {
@@ -107,7 +117,7 @@ func main() {
 
 	client := etcd.NewClient([]string{flags.Server})
 
-	renderer, err := etcdexpose.NewValueRenderer(flags.Template)
+	renderer, err := etcdexpose.NewValueRenderer(flags.Template, flags.Port)
 
 	if err != nil {
 		log.Fatalf("Invalid template given")
