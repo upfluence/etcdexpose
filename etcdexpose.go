@@ -85,8 +85,8 @@ func init() {
 	flagset.Uint64Var(&flags.Ttl, "ttl", 0, "Key time to live")
 
 	flagset.UintVar(&flags.Port, "port", 0, "Port to expose")
-	flagset.UintVar(&flags.Port, "-p", 0, "Port to expose")
-	flagset.UintVar(&flags.CheckPort, "check-port", flags.Port, "Check port to use")
+	flagset.UintVar(&flags.Port, "p", 0, "Port to expose")
+	flagset.UintVar(&flags.CheckPort, "check-port", 0, "Check port to use")
 }
 
 func main() {
@@ -103,6 +103,9 @@ func main() {
 		os.Exit(1)
 	}
 
+	if flags.CheckPort == 0 {
+		flags.CheckPort = flags.Port
+	}
 	if flags.Version {
 		fmt.Printf("etcdexpose v%s", currentVersion)
 		os.Exit(0)
@@ -123,7 +126,9 @@ func main() {
 		log.Fatalf("Invalid template given")
 	}
 
-	healthCheck := etcdexpose.NewHealthCheck(flags.HealthPath)
+	healthCheck := etcdexpose.NewHealthCheck(
+		flags.HealthPath, flags.CheckPort,
+	)
 
 	namespace_client := etcdexpose.NewEtcdClient(
 		client,
