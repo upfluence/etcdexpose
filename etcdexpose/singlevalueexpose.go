@@ -5,25 +5,25 @@ import (
 	"github.com/coreos/go-etcd/etcd"
 )
 
-type SingleKeyExpose struct {
+type SingleValueExpose struct {
 	client   *EtcdClient
 	renderer *ValueRenderer
 	ping     *Ping
 }
 
-func NewSingleKeyExpose(
+func NewSingleValueExpose(
 	client *EtcdClient,
 	renderer *ValueRenderer,
 	ping *Ping,
-) *SingleKeyExpose {
-	return &SingleKeyExpose{
+) *SingleValueExpose {
+	return &SingleValueExpose{
 		client:   client,
 		renderer: renderer,
 		ping:     ping,
 	}
 }
 
-func (s *SingleKeyExpose) Perform() error {
+func (s *SingleValueExpose) Perform() error {
 	resp, err := s.client.ReadNamespace()
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func (s *SingleKeyExpose) Perform() error {
 	return nil
 }
 
-func (s *SingleKeyExpose) pickNode(nodes etcd.Nodes) *etcd.Node {
+func (s *SingleValueExpose) pickNode(nodes etcd.Nodes) *etcd.Node {
 	var pick *etcd.Node = nil
 	for _, node := range nodes {
 		_, err := s.ping.Do(node.Value)

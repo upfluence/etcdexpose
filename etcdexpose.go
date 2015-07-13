@@ -127,7 +127,7 @@ func main() {
 		)
 
 	} else {
-		handler = etcdexpose.NewSingleKeyExpose(
+		handler = etcdexpose.NewSingleValueExpose(
 			namespace_client,
 			renderer,
 			ping,
