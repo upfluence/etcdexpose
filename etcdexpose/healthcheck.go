@@ -8,7 +8,7 @@ import (
 
 const URL_TEMPLATE = "http://{{.Value}}{{.Path}}"
 
-type Ping struct {
+type HealthCheck struct {
 	client *http.Client
 	path   string
 	tmpl   *template.Template
@@ -19,16 +19,16 @@ type urlMembers struct {
 	Path  string
 }
 
-func NewPing(path string) *Ping {
+func NewHealthCheck(path string) *HealthCheck {
 	tmpl, _ := template.New("url").Parse(URL_TEMPLATE)
-	return &Ping{
+	return &HealthCheck{
 		client: &http.Client{},
 		path:   path,
 		tmpl:   tmpl,
 	}
 }
 
-func (p *Ping) Do(value string) (*http.Response, error) {
+func (p *HealthCheck) Do(value string) (*http.Response, error) {
 	url, err := p.renderUrl(&urlMembers{Value: value, Path: p.path})
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (p *Ping) Do(value string) (*http.Response, error) {
 	return p.client.Get(url)
 }
 
-func (p *Ping) renderUrl(value *urlMembers) (string, error) {
+func (p *HealthCheck) renderUrl(value *urlMembers) (string, error) {
 	b := &bytes.Buffer{}
 	err := p.tmpl.Execute(b, value)
 	return b.String(), err

@@ -7,20 +7,20 @@ import (
 )
 
 type MultipleValueExpose struct {
-	client   *EtcdClient
-	renderer *ValueRenderer
-	ping     *Ping
+	client      *EtcdClient
+	renderer    *ValueRenderer
+	healthCheck *HealthCheck
 }
 
 func NewMutlipleValueExpose(
 	client *EtcdClient,
 	renderer *ValueRenderer,
-	ping *Ping,
+	healthCheck *HealthCheck,
 ) *MultipleValueExpose {
 	return &MultipleValueExpose{
-		client:   client,
-		renderer: renderer,
-		ping:     ping,
+		client:      client,
+		renderer:    renderer,
+		healthCheck: healthCheck,
 	}
 }
 
@@ -58,7 +58,7 @@ func (m *MultipleValueExpose) Perform() error {
 func (m *MultipleValueExpose) filterNodes(nodes etcd.Nodes) etcd.Nodes {
 	var selection etcd.Nodes
 	for _, node := range nodes {
-		_, err := m.ping.Do(node.Value)
+		_, err := m.healthCheck.Do(node.Value)
 		if err == nil {
 			selection = append(selection, node)
 		}
@@ -75,6 +75,5 @@ func (m *MultipleValueExpose) formatNodes(nodes etcd.Nodes) (string, error) {
 		}
 		urls = append(urls, val)
 	}
-
 	return strings.Join(urls, ","), nil
 }

@@ -110,7 +110,7 @@ func main() {
 		log.Fatalf("Invalid template given")
 	}
 
-	ping := etcdexpose.NewPing(flags.PingPath)
+	healthCheck := etcdexpose.NewHealthCheck(flags.PingPath)
 
 	namespace_client := etcdexpose.NewEtcdClient(
 		client,
@@ -129,14 +129,14 @@ func main() {
 		handler = etcdexpose.NewMutlipleValueExpose(
 			namespace_client,
 			renderer,
-			ping,
+			healthCheck,
 		)
 
 	} else {
 		handler = etcdexpose.NewSingleValueExpose(
 			namespace_client,
 			renderer,
-			ping,
+			healthCheck,
 		)
 	}
 

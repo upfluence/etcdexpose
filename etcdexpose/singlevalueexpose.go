@@ -6,20 +6,20 @@ import (
 )
 
 type SingleValueExpose struct {
-	client   *EtcdClient
-	renderer *ValueRenderer
-	ping     *Ping
+	client      *EtcdClient
+	renderer    *ValueRenderer
+	healthCheck *HealthCheck
 }
 
 func NewSingleValueExpose(
 	client *EtcdClient,
 	renderer *ValueRenderer,
-	ping *Ping,
+	healthCheck *HealthCheck,
 ) *SingleValueExpose {
 	return &SingleValueExpose{
-		client:   client,
-		renderer: renderer,
-		ping:     ping,
+		client:      client,
+		renderer:    renderer,
+		healthCheck: healthCheck,
 	}
 }
 
@@ -57,7 +57,7 @@ func (s *SingleValueExpose) Perform() error {
 func (s *SingleValueExpose) pickNode(nodes etcd.Nodes) *etcd.Node {
 	var pick *etcd.Node = nil
 	for _, node := range nodes {
-		_, err := s.ping.Do(node.Value)
+		_, err := s.healthCheck.Do(node.Value)
 		if err == nil {
 			pick = node
 			break
