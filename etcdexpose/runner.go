@@ -8,12 +8,17 @@ type Handler interface {
 	Perform() error
 }
 
+type Watcher interface {
+	Start(eventChan chan bool, failureChan chan error)
+	Stop()
+}
+
 type Runner struct {
-	Watcher *EtcdWatcher
+	Watcher Watcher
 	Handler Handler
 }
 
-func NewRunner(watcher *EtcdWatcher, handler Handler) *Runner {
+func NewRunner(watcher Watcher, handler Handler) *Runner {
 	return &Runner{
 		Watcher: watcher,
 		Handler: handler,
@@ -21,17 +26,19 @@ func NewRunner(watcher *EtcdWatcher, handler Handler) *Runner {
 }
 
 func (r *Runner) Start() {
-	go r.Watcher.Start()
+	eventChan := make(chan bool)
+	failureChan := make(chan error)
+	go r.Watcher.Start(eventChan, failureChan)
 	for {
 		select {
-		case event := <-r.Watcher.EventChan:
-			log.Printf("Received a new event %s", event.Action)
+		case <-eventChan:
+			log.Printf("Received a new event ")
 			err := r.Handler.Perform()
 			if err != nil {
 				log.Print(err)
 			}
 			log.Print("Processed event")
-		case err := <-r.Watcher.ErrorChan:
+		case err := <-failureChan:
 			log.Fatal("Error %s", err)
 		}
 	}
