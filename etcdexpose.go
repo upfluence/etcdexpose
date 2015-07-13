@@ -37,7 +37,7 @@ var (
 		Namespace  string
 		HealthPath string
 		Key        string
-		Interval   int
+		Interval   uint
 		Ttl        uint64
 	}{}
 )
@@ -77,8 +77,8 @@ func init() {
 	flagset.StringVar(&flags.HealthPath, "health-check", "/", "Path to use to perform healthCheck")
 	flagset.StringVar(&flags.HealthPath, "h", "/", "Path to use to perform healthCheck")
 
-	flagset.IntVar(&flags.Interval, "interval", 0, "Perform an update at regular interval if > 0")
-	flagset.IntVar(&flags.Interval, "i", 0, "Perform an update at regulat interfal if > 0")
+	flagset.UintVar(&flags.Interval, "interval", 0, "Perform an update at regular interval if > 0")
+	flagset.UintVar(&flags.Interval, "i", 0, "Perform an update at regulat interfal if > 0")
 
 	flagset.Uint64Var(&flags.Ttl, "ttl", 0, "Key time to live")
 
