@@ -1,26 +1,25 @@
 package etcdexpose
 
 import (
+	"github.com/coreos/go-etcd/etcd"
 	"time"
 )
 
 type TimeWatcher struct {
 	interval time.Duration
 	unit     time.Duration
-	stopChan chan bool
 }
 
 func NewTimeWatcher(interval time.Duration, unit time.Duration) *TimeWatcher {
 	return &TimeWatcher{
 		interval: interval,
 		unit:     unit,
-		stopChan: make(chan bool),
 	}
 }
 
-func (t *TimeWatcher) Start(eventChan chan bool, _ chan error) {
+func (t *TimeWatcher) Start(eventChan chan *etcd.Response, _ chan error) {
 	for {
 		time.Sleep(t.interval * t.unit)
-		eventChan <- true
+		eventChan <- nil
 	}
 }

@@ -1,6 +1,7 @@
 package etcdexpose
 
 import (
+	"github.com/coreos/go-etcd/etcd"
 	"log"
 )
 
@@ -9,7 +10,7 @@ type Handler interface {
 }
 
 type Watcher interface {
-	Start(eventChan chan bool, failureChan chan error)
+	Start(eventChan chan *etcd.Response, failureChan chan error)
 }
 
 type Runner struct {
@@ -29,7 +30,7 @@ func (r *Runner) AddWatcher(watcher Watcher) {
 }
 
 func (r *Runner) Start() {
-	eventChan := make(chan bool)
+	eventChan := make(chan *etcd.Response)
 	failureChan := make(chan error)
 
 	for _, watcher := range r.watchers {

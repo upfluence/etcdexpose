@@ -17,29 +17,15 @@ func NewEtcdWatcher(namespace string, cli *etcd.Client) *EtcdWatcher {
 	}
 }
 
-func (e *EtcdWatcher) Start(eventChan chan bool, errorChan chan error) {
+func (e *EtcdWatcher) Start(eventChan chan *etcd.Response, errorChan chan error) {
 	log.Printf("Begining to watch key %s", e.Namespace)
-
-	respChan := make(chan *etcd.Response)
-
-	// Meh, should find a better way to convert an etcdresponse to a bool
-	go func(
-		respChan chan *etcd.Response,
-		eventChan chan bool,
-	) {
-		for {
-			<-respChan
-			eventChan <- true
-
-		}
-	}(respChan, eventChan)
 
 	for {
 		_, err := e.client.Watch(
 			e.Namespace,
 			0,
 			true,
-			respChan,
+			eventChan,
 			nil)
 		errorChan <- err
 	}
