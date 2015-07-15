@@ -33,6 +33,11 @@ func (r *Runner) Start() {
 	eventChan := make(chan *etcd.Response)
 	failureChan := make(chan error)
 
+	err := r.handler.Perform()
+	if err != nil {
+		log.Print(err)
+	}
+
 	for _, watcher := range r.watchers {
 		go watcher.Start(eventChan, failureChan)
 	}
