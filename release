@@ -1,0 +1,11 @@
+#!/bin/sh
+
+version=`grep currentVersion etcdexpose.go | head -n 1 | cut -d\" -f2`
+
+git tag v$version
+
+GOOS=linux CGO_ENABLED=0 GOARCH=amd64 go build -o etcdexpose-linux-amd64-$version .
+
+hub release create -a etcdexpose-linux-amd64-$version v$version
+
+rm etcdexpose-*
