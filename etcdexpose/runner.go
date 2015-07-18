@@ -51,7 +51,7 @@ func (r *Runner) Start() error {
 			if err != nil {
 				log.Print(err)
 			}
-			log.Print("Processed event")
+			log.Printf("Processed event")
 		case err := <-failureChan:
 			return err
 		}

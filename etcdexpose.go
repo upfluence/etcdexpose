@@ -173,10 +173,9 @@ func main() {
 
 	for {
 		err := runner.Start()
-		log.Printf("Spotted an error, waiting 5s ...")
 		log.Print(err)
+		log.Printf("Spotted an error, waiting 5s ...")
 		runner.Stop()
 		time.Sleep(5 * time.Second)
-		log.Printf("Retrying")
 	}
 }
