@@ -21,3 +21,7 @@ func (t *TimeWatcher) Start(eventChan chan *etcd.Response, _ chan error) {
 		eventChan <- nil
 	}
 }
+
+func (t *TimeWatcher) Stop() {
+	t.ticker.Stop()
+}

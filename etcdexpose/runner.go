@@ -11,6 +11,7 @@ type Handler interface {
 
 type Watcher interface {
 	Start(eventChan chan *etcd.Response, failureChan chan error)
+	Stop()
 }
 
 type Runner struct {
@@ -29,7 +30,7 @@ func (r *Runner) AddWatcher(watcher Watcher) {
 	r.watchers = append(r.watchers, watcher)
 }
 
-func (r *Runner) Start() {
+func (r *Runner) Start() error {
 	eventChan := make(chan *etcd.Response)
 	failureChan := make(chan error)
 
@@ -52,7 +53,13 @@ func (r *Runner) Start() {
 			}
 			log.Print("Processed event")
 		case err := <-failureChan:
-			log.Fatal("Error %s", err)
+			return err
 		}
+	}
+}
+
+func (r *Runner) Stop() {
+	for _, watcher := range r.watchers {
+		watcher.Stop()
 	}
 }
