@@ -6,20 +6,18 @@ import (
 )
 
 type TimeWatcher struct {
-	interval time.Duration
-	unit     time.Duration
+	ticker *time.Ticker
 }
 
 func NewTimeWatcher(interval time.Duration, unit time.Duration) *TimeWatcher {
 	return &TimeWatcher{
-		interval: interval,
-		unit:     unit,
+		ticker: time.NewTicker(interval * unit),
 	}
 }
 
 func (t *TimeWatcher) Start(eventChan chan *etcd.Response, _ chan error) {
 	for {
-		time.Sleep(t.interval * t.unit)
+		<-t.ticker.C
 		eventChan <- nil
 	}
 }
