@@ -29,7 +29,10 @@ func (e *EtcdWatcher) Start(eventChan chan *etcd.Response, errorChan chan error)
 		true,
 		eventChan,
 		e.stopChan)
-	errorChan <- err
+
+	if err != nil {
+		errorChan <- err
+	}
 	return
 }
 
