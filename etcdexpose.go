@@ -171,5 +171,11 @@ func main() {
 		runner.AddWatcher(timeWatcher)
 	}
 
-	runner.Start()
+	for {
+		err := runner.Start()
+		log.Print(err)
+		log.Printf("Spotted an error, waiting 5s ...")
+		runner.Stop()
+		time.Sleep(5 * time.Second)
+	}
 }

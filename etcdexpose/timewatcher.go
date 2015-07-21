@@ -6,8 +6,10 @@ import (
 )
 
 type TimeWatcher struct {
+	ticker   *time.Ticker
 	interval time.Duration
 	unit     time.Duration
+	stopChan chan bool
 }
 
 func NewTimeWatcher(interval time.Duration, unit time.Duration) *TimeWatcher {
@@ -18,8 +20,20 @@ func NewTimeWatcher(interval time.Duration, unit time.Duration) *TimeWatcher {
 }
 
 func (t *TimeWatcher) Start(eventChan chan *etcd.Response, _ chan error) {
+	t.ticker = time.NewTicker(t.interval * t.unit)
+	t.stopChan = make(chan bool)
+
 	for {
-		time.Sleep(t.interval * t.unit)
-		eventChan <- nil
+		select {
+		case <-t.ticker.C:
+			eventChan <- nil
+		case <-t.stopChan:
+			return
+		}
 	}
+}
+
+func (t *TimeWatcher) Stop() {
+	t.stopChan <- true
+	t.ticker.Stop()
 }
