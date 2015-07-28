@@ -113,10 +113,6 @@ func main() {
 
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, os.Interrupt)
-	go func() {
-		<-sigch
-		os.Exit(0)
-	}()
 
 	client := etcd.NewClient([]string{flags.Server})
 
@@ -170,6 +166,12 @@ func main() {
 
 		runner.AddWatcher(timeWatcher)
 	}
+
+	go func() {
+		<-sigch
+		runner.Stop()
+		os.Exit(0)
+	}()
 
 	for {
 		runner.Start()
