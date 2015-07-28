@@ -19,7 +19,7 @@ func NewTimeWatcher(interval time.Duration, unit time.Duration) *TimeWatcher {
 	}
 }
 
-func (t *TimeWatcher) Start(eventChan chan *etcd.Response, _ chan error) {
+func (t *TimeWatcher) Start(eventChan chan *etcd.Response) {
 	t.ticker = time.NewTicker(t.interval * t.unit)
 	t.stopChan = make(chan bool)
 

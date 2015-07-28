@@ -8,7 +8,6 @@ import (
 type EtcdWatcher struct {
 	Namespace string
 	client    *etcd.Client
-	stopChan  chan bool
 }
 
 func NewEtcdWatcher(namespace string, cli *etcd.Client) *EtcdWatcher {
@@ -18,24 +17,18 @@ func NewEtcdWatcher(namespace string, cli *etcd.Client) *EtcdWatcher {
 	}
 }
 
-func (e *EtcdWatcher) Start(eventChan chan *etcd.Response, errorChan chan error) {
+func (e *EtcdWatcher) Start(eventChan chan *etcd.Response) {
 	log.Printf("Begining to watch key %s", e.Namespace)
-
-	e.stopChan = make(chan bool, 1)
 
 	_, err := e.client.Watch(
 		e.Namespace,
 		0,
 		true,
 		eventChan,
-		e.stopChan)
+		nil)
 
-	if err != nil {
-		errorChan <- err
-	}
+	log.Printf("EtcdWatcher error: %s", err.Error())
 	return
 }
 
-func (e *EtcdWatcher) Stop() {
-	e.stopChan <- true
-}
+func (e *EtcdWatcher) Stop() {}

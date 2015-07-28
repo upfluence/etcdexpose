@@ -3,6 +3,7 @@ package etcdexpose
 import (
 	"github.com/coreos/go-etcd/etcd"
 	"log"
+	"reflect"
 )
 
 type Handler interface {
@@ -10,7 +11,7 @@ type Handler interface {
 }
 
 type Watcher interface {
-	Start(eventChan chan *etcd.Response, failureChan chan error)
+	Start(eventChan chan *etcd.Response)
 	Stop()
 }
 
@@ -30,31 +31,33 @@ func (r *Runner) AddWatcher(watcher Watcher) {
 	r.watchers = append(r.watchers, watcher)
 }
 
-func (r *Runner) Start() error {
-	eventChan := make(chan *etcd.Response)
-	failureChan := make(chan error)
-
+func (r *Runner) Start() {
 	err := r.handler.Perform()
+
 	if err != nil {
 		log.Print(err)
 	}
 
-	for _, watcher := range r.watchers {
-		go watcher.Start(eventChan, failureChan)
+	event_cases := make([]reflect.SelectCase, len(r.watchers))
+
+	for i, watcher := range r.watchers {
+		localEventChan := make(chan *etcd.Response)
+		event_cases[i] = reflect.SelectCase{
+			Dir:  reflect.SelectRecv,
+			Chan: reflect.ValueOf(localEventChan),
+		}
+
+		go watcher.Start(localEventChan)
 	}
 
 	for {
-		select {
-		case <-eventChan:
-			log.Printf("Received a new event ")
-			err := r.handler.Perform()
-			if err != nil {
-				log.Print(err)
-			}
-			log.Printf("Processed event")
-		case err := <-failureChan:
-			return err
+		_, _, ok := reflect.Select(event_cases)
+		log.Printf("Received a new event")
+		if !ok {
+			log.Printf("Spotted a chan close, returning")
+			return
 		}
+		r.handler.Perform()
 	}
 }
 
