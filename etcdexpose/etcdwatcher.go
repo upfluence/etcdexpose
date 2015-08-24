@@ -18,7 +18,7 @@ func NewEtcdWatcher(namespace string, cli *etcd.Client) *EtcdWatcher {
 	}
 }
 
-func (e *EtcdWatcher) Start(eventChan chan *etcd.Response, errorChan chan error) {
+func (e *EtcdWatcher) Start(eventChan chan *etcd.Response) {
 	log.Printf("Begining to watch key %s", e.Namespace)
 
 	e.stopChan = make(chan bool, 1)
@@ -30,9 +30,7 @@ func (e *EtcdWatcher) Start(eventChan chan *etcd.Response, errorChan chan error)
 		eventChan,
 		e.stopChan)
 
-	if err != nil {
-		errorChan <- err
-	}
+	log.Printf("EtcdWatcher error: %s", err.Error())
 	return
 }
 

@@ -25,7 +25,7 @@ import (
 	"github.com/upfluence/etcdexpose/etcdexpose"
 )
 
-const currentVersion = "0.0.5"
+const currentVersion = "0.0.6"
 
 var (
 	flagset = flag.NewFlagSet("etcdexpose", flag.ExitOnError)
@@ -113,10 +113,6 @@ func main() {
 
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, os.Interrupt)
-	go func() {
-		<-sigch
-		os.Exit(0)
-	}()
 
 	client := etcd.NewClient([]string{flags.Server})
 
@@ -171,11 +167,16 @@ func main() {
 		runner.AddWatcher(timeWatcher)
 	}
 
-	for {
-		err := runner.Start()
-		log.Print(err)
-		log.Printf("Spotted an error, waiting 5s ...")
+	go func() {
+		<-sigch
 		runner.Stop()
+		os.Exit(0)
+	}()
+
+	for {
+		runner.Start()
+		runner.Stop()
+		log.Printf("Runner exited, waiting 5s ...")
 		time.Sleep(5 * time.Second)
 	}
 }
