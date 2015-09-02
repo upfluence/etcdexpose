@@ -98,6 +98,11 @@ func main() {
 		os.Exit(0)
 	}
 
+	if flags.Version {
+		fmt.Printf("etcdexpose v%s", currentVersion)
+		os.Exit(0)
+	}
+
 	if flags.Port == 0 {
 		fmt.Println("You must provide a valid port to expose with -p flag")
 		os.Exit(1)
@@ -105,10 +110,6 @@ func main() {
 
 	if flags.CheckPort == 0 {
 		flags.CheckPort = flags.Port
-	}
-	if flags.Version {
-		fmt.Printf("etcdexpose v%s", currentVersion)
-		os.Exit(0)
 	}
 
 	sigch := make(chan os.Signal, 1)

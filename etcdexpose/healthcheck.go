@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"text/template"
+	"time"
 )
 
 const URL_TEMPLATE = "http://{{.Value}}:{{.Port}}{{.Path}}"
@@ -24,7 +25,7 @@ type urlMembers struct {
 func NewHealthCheck(path string, port uint) *HealthCheck {
 	tmpl, _ := template.New("url").Parse(URL_TEMPLATE)
 	return &HealthCheck{
-		client: &http.Client{},
+		client: &http.Client{Timeout: 5 * time.Second},
 		path:   path,
 		tmpl:   tmpl,
 		port:   port,
