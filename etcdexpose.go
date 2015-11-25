@@ -176,8 +176,9 @@ func main() {
 
 	for {
 		runner.Start()
+		log.Printf("Runner exited, Stopping runner...")
 		runner.Stop()
-		log.Printf("Runner exited, waiting 5s ...")
+		log.Printf("waiting 5s ...")
 		time.Sleep(5 * time.Second)
 	}
 }

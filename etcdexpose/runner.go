@@ -57,7 +57,11 @@ func (r *Runner) Start() {
 			log.Printf("Spotted a chan close, returning")
 			return
 		}
-		r.handler.Perform()
+		err := r.handler.Perform()
+
+		if err != nil {
+			log.Print(err)
+		}
 	}
 }
 

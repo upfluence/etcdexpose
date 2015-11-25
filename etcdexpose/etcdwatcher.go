@@ -35,5 +35,7 @@ func (e *EtcdWatcher) Start(eventChan chan *etcd.Response) {
 }
 
 func (e *EtcdWatcher) Stop() {
+	log.Printf("Stopping etcdwatcher")
 	e.stopChan <- true
+	log.Printf("Etcdwatcher stopped")
 }

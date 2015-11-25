@@ -3,6 +3,7 @@ package etcdexpose
 import (
 	"errors"
 	"github.com/coreos/go-etcd/etcd"
+	"log"
 )
 
 type SingleValueExpose struct {
@@ -42,10 +43,10 @@ func (s *SingleValueExpose) Perform() error {
 		return err
 	}
 
-	_, setErr := s.client.WriteValue(val)
+	_, err = s.client.WriteValue(val)
 
-	if setErr != nil {
-		return setErr
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -57,7 +58,14 @@ func (s *SingleValueExpose) pickNode(nodes etcd.Nodes) *etcd.Node {
 		_, err := s.healthCheck.Do(node.Value)
 		if err == nil {
 			pick = node
+			log.Printf(
+				"Picked node %s at address %s",
+				node.Key,
+				node.Value,
+			)
 			break
+		} else {
+			log.Printf("Node %s: Error: %s", node.Key, err.Error())
 		}
 	}
 	return pick
