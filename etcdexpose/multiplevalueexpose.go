@@ -2,8 +2,10 @@ package etcdexpose
 
 import (
 	"errors"
-	"github.com/coreos/go-etcd/etcd"
+	"log"
 	"strings"
+
+	"github.com/coreos/go-etcd/etcd"
 )
 
 type MultipleValueExpose struct {
@@ -33,7 +35,6 @@ func (m *MultipleValueExpose) Perform() error {
 	picks := m.filterNodes(resp.Node.Nodes)
 
 	if picks.Len() == 0 {
-		m.client.RemoveKey()
 		return errors.New("Failed to find any valid node in given namespace")
 	}
 
@@ -57,7 +58,10 @@ func (m *MultipleValueExpose) filterNodes(nodes etcd.Nodes) etcd.Nodes {
 	for _, node := range nodes {
 		_, err := m.healthCheck.Do(node.Value)
 		if err == nil {
+			log.Printf("Node %s marked as valid", node.Key)
 			selection = append(selection, node)
+		} else {
+			log.Printf("Node %s: Error: %s", node.Key, err.Error())
 		}
 	}
 	return selection

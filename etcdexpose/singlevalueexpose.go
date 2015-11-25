@@ -33,7 +33,6 @@ func (s *SingleValueExpose) Perform() error {
 	pick := s.pickNode(resp.Node.Nodes)
 
 	if pick == nil {
-		s.client.RemoveKey()
 		return errors.New("Unable to find a valid node in given namespace")
 	}
 
