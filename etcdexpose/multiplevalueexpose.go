@@ -56,7 +56,7 @@ func (m *MultipleValueExpose) Perform() error {
 func (m *MultipleValueExpose) filterNodes(nodes etcd.Nodes) etcd.Nodes {
 	var selection etcd.Nodes
 	for _, node := range nodes {
-		_, err := m.healthCheck.Do(node.Value)
+		err := m.healthCheck.Do(node.Value)
 		if err == nil {
 			log.Printf("Node %s marked as valid", node.Key)
 			selection = append(selection, node)

@@ -25,7 +25,7 @@ import (
 	"github.com/upfluence/etcdexpose/etcdexpose"
 )
 
-const currentVersion = "0.0.9"
+const currentVersion = "0.0.10"
 
 var (
 	flagset = flag.NewFlagSet("etcdexpose", flag.ExitOnError)
@@ -38,6 +38,8 @@ var (
 		HealthPath string
 		Key        string
 		Interval   uint
+		Retry      uint
+		RetryDelay uint
 		Ttl        uint64
 		Port       uint
 		CheckPort  uint
@@ -82,6 +84,11 @@ func init() {
 	flagset.UintVar(&flags.Interval, "interval", 0, "Perform an update at regular interval if > 0")
 	flagset.UintVar(&flags.Interval, "i", 0, "Perform an update at regulat interfal if > 0")
 
+	flagset.UintVar(&flags.Retry, "retry", 0, "Healthcheck retry")
+	flagset.UintVar(&flags.Retry, "r", 0, "Healtcheck retry")
+	flagset.UintVar(&flags.RetryDelay, "retry-delay", 5, "Healtcheck retry delay")
+	flagset.UintVar(&flags.RetryDelay, "rd", 5, "Healtcheck retry delay")
+
 	flagset.Uint64Var(&flags.Ttl, "ttl", 0, "Key time to live")
 
 	flagset.UintVar(&flags.Port, "port", 0, "Port to expose")
@@ -124,7 +131,10 @@ func main() {
 	}
 
 	healthCheck := etcdexpose.NewHealthCheck(
-		flags.HealthPath, flags.CheckPort,
+		flags.HealthPath,
+		flags.CheckPort,
+		flags.Retry,
+		flags.RetryDelay,
 	)
 
 	namespace_client := etcdexpose.NewEtcdClient(
