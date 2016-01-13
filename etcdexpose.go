@@ -39,7 +39,8 @@ var (
 		Key        string
 		Interval   uint
 		Retry      uint
-		RetryDelay uint
+		RetryDelay time.Duration
+		Timeout    time.Duration
 		Ttl        uint64
 		Port       uint
 		CheckPort  uint
@@ -86,8 +87,11 @@ func init() {
 
 	flagset.UintVar(&flags.Retry, "retry", 0, "Healthcheck retry")
 	flagset.UintVar(&flags.Retry, "r", 0, "Healtcheck retry")
-	flagset.UintVar(&flags.RetryDelay, "retry-delay", 5, "Healtcheck retry delay")
-	flagset.UintVar(&flags.RetryDelay, "rd", 5, "Healtcheck retry delay")
+	flagset.DurationVar(&flags.RetryDelay, "retry-delay", 5*time.Second, "Healtcheck retry delay")
+	flagset.DurationVar(&flags.RetryDelay, "rd", 5*time.Second, "Healtcheck retry delay")
+
+	flagset.DurationVar(&flags.Timeout, "client-timeout", 5*time.Second, "Client timeout")
+	flagset.DurationVar(&flags.Timeout, "ct", 5*time.Second, "Client timeout")
 
 	flagset.Uint64Var(&flags.Ttl, "ttl", 0, "Key time to live")
 
@@ -135,6 +139,7 @@ func main() {
 		flags.CheckPort,
 		flags.Retry,
 		flags.RetryDelay,
+		flags.Timeout,
 	)
 
 	namespace_client := etcdexpose.NewEtcdClient(

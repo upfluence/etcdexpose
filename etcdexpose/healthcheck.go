@@ -25,7 +25,10 @@ type urlMembers struct {
 	Port  uint
 }
 
-func NewHealthCheck(path string, port, retry, retryDelay uint) *HealthCheck {
+func NewHealthCheck(
+	path string,
+	port, retry uint,
+	retryDelay, timeout time.Duration) *HealthCheck {
 	tmpl, _ := template.New("url").Parse(URL_TEMPLATE)
 	return &HealthCheck{
 		client:     &http.Client{Timeout: 5 * time.Second},
@@ -33,7 +36,7 @@ func NewHealthCheck(path string, port, retry, retryDelay uint) *HealthCheck {
 		tmpl:       tmpl,
 		port:       port,
 		retry:      retry,
-		retryDelay: time.Duration(retryDelay) * time.Second,
+		retryDelay: retryDelay,
 	}
 }
 
