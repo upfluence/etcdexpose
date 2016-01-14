@@ -54,7 +54,7 @@ func (s *SingleValueExpose) Perform() error {
 func (s *SingleValueExpose) pickNode(nodes etcd.Nodes) *etcd.Node {
 	var pick *etcd.Node = nil
 	for _, node := range nodes {
-		_, err := s.healthCheck.Do(node.Value)
+		err := s.healthCheck.Do(node.Value)
 		if err == nil {
 			pick = node
 			log.Printf(
