@@ -38,11 +38,11 @@ func (r *Runner) Start() {
 		log.Print(err)
 	}
 
-	event_cases := make([]reflect.SelectCase, len(r.watchers))
+	eventCases := make([]reflect.SelectCase, len(r.watchers))
 
 	for i, watcher := range r.watchers {
 		localEventChan := make(chan *etcd.Response)
-		event_cases[i] = reflect.SelectCase{
+		eventCases[i] = reflect.SelectCase{
 			Dir:  reflect.SelectRecv,
 			Chan: reflect.ValueOf(localEventChan),
 		}
@@ -51,10 +51,10 @@ func (r *Runner) Start() {
 	}
 
 	for {
-		_, _, ok := reflect.Select(event_cases)
+		chosen, _, ok := reflect.Select(eventCases)
 		log.Printf("Received a new event")
 		if !ok {
-			log.Printf("Spotted a chan close, returning")
+			log.Printf("Spotted a chan close at %d, returning\n", chosen)
 			return
 		}
 		err := r.handler.Perform()
