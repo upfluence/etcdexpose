@@ -184,7 +184,8 @@ func main() {
 	}
 
 	go func() {
-		<-sigch
+		s := <-sigch
+		log.Printf("Received signal [%v] stopping application\n", s)
 		runner.Stop()
 		os.Exit(0)
 	}()

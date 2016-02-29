@@ -20,7 +20,6 @@ func NewEtcdWatcher(namespace string, cli *etcd.Client) *EtcdWatcher {
 
 func (e *EtcdWatcher) Start(eventChan chan *etcd.Response) {
 	log.Printf("Begining to watch key %s", e.Namespace)
-
 	e.stopChan = make(chan bool, 1)
 
 	_, err := e.client.Watch(
