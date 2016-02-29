@@ -1,8 +1,9 @@
 package etcdexpose
 
 import (
-	"errors"
 	"github.com/coreos/go-etcd/etcd"
+
+	"errors"
 	"log"
 )
 

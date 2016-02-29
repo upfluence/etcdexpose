@@ -19,6 +19,7 @@ func NewWatcher(namespace string, keys client.KeysAPI) iface.Watcher {
 }
 
 func (w *watcher) Start() <-chan bool {
+	// Avoid blocking watcher
 	out := make(chan bool, 5)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -44,7 +45,10 @@ func (w *watcher) run(watch client.Watcher, ctx context.Context, out chan<- bool
 	for {
 		_, err := watch.Next(ctx)
 		if err != nil {
-			log.Printf("Got an error from etcd [%s], closing chan, exiting\n", err)
+			log.Printf(
+				"Got an error from etcd [%s], closing chan, exiting\n",
+				err,
+			)
 			close(out)
 			return
 		}
