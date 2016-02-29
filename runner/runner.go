@@ -1,34 +1,23 @@
 package etcdexpose
 
 import (
-	"github.com/coreos/go-etcd/etcd"
 	"log"
 	"reflect"
+
+	"github.com/upfluence/etcdexpose/handler"
+	"github.com/upfluence/etcdexpose/watcher"
 )
 
-type Handler interface {
-	Perform() error
-}
-
-type Watcher interface {
-	Start(eventChan chan *etcd.Response)
-	Stop()
-}
-
 type Runner struct {
-	handler  Handler
-	watchers []Watcher
+	handler  handler.Handler
+	watchers []watcher.Watcher
 }
 
-func NewRunner(handler Handler) *Runner {
+func NewRunner(handler handler.Handler, watchers []watcher.Watcher) *Runner {
 	return &Runner{
-		watchers: []Watcher{},
+		watchers: watchers,
 		handler:  handler,
 	}
-}
-
-func (r *Runner) AddWatcher(watcher Watcher) {
-	r.watchers = append(r.watchers, watcher)
 }
 
 func (r *Runner) Start() {
@@ -41,22 +30,26 @@ func (r *Runner) Start() {
 	eventCases := make([]reflect.SelectCase, len(r.watchers))
 
 	for i, watcher := range r.watchers {
-		localEventChan := make(chan *etcd.Response)
 		eventCases[i] = reflect.SelectCase{
-			Dir:  reflect.SelectRecv,
-			Chan: reflect.ValueOf(localEventChan),
+			Dir: reflect.SelectRecv,
+			Chan: reflect.ValueOf(
+				watcher.Start(),
+			),
 		}
 
-		go watcher.Start(localEventChan)
 	}
 
 	for {
 		chosen, _, ok := reflect.Select(eventCases)
 		log.Printf("Received a new event")
 		if !ok {
-			log.Printf("Spotted a chan close at %d, returning\n", chosen)
+			log.Printf(
+				"Spotted a chan close at %d, returning\n",
+				chosen,
+			)
 			return
 		}
+
 		err := r.handler.Perform()
 
 		if err != nil {
