@@ -1,4 +1,4 @@
-package etcdexpose
+package utils
 
 import (
 	"bytes"
@@ -29,8 +29,12 @@ func NewHealthCheck(
 	path string,
 	port, retry uint,
 	retryDelay,
-	timeout time.Duration) *HealthCheck {
-	tmpl, _ := template.New("url").Parse(URL_TEMPLATE)
+	timeout time.Duration) (*HealthCheck, error) {
+	tmpl, err := template.New("url").Parse(URL_TEMPLATE)
+	if err != nil {
+		return nil, err
+	}
+
 	return &HealthCheck{
 		client:     &http.Client{Timeout: 5 * time.Second},
 		path:       path,
@@ -38,35 +42,49 @@ func NewHealthCheck(
 		port:       port,
 		retry:      retry,
 		retryDelay: retryDelay,
-	}
+	}, nil
 }
 
-func (p *HealthCheck) Do(value string) error {
+func (p *HealthCheck) Do(host string) error {
 	url, err := p.renderUrl(
-		&urlMembers{Value: value, Path: p.path, Port: p.port},
+		&urlMembers{Value: host, Path: p.path, Port: p.port},
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return p.test(url, 0)
-}
+	var attempt uint = 0
 
-func (p *HealthCheck) test(url string, attempt uint) error {
-	log.Printf(
-		"Performing healthcheck at url [%s], attempt [%d]/[%d]",
-		url,
-		attempt,
-		p.retry,
-	)
-	_, err := p.client.Get(url)
+	for attempt < p.retry {
+		log.Printf(
+			"Performing retry at url [%s], attempt [%d]/[%d]\n",
+			url,
+			attempt+1,
+			p.retry,
+		)
 
-	if err != nil && attempt < p.retry {
+		err = p.test(url)
+
+		if err == nil {
+			break
+		}
+
 		time.Sleep(p.retryDelay)
 		attempt += 1
-		err = p.test(url, attempt)
 	}
+
+	return err
+}
+
+func (p *HealthCheck) test(url string) error {
+	res, err := p.client.Get(url)
+
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
 
 	return err
 }
