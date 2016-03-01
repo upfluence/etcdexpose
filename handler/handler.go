@@ -1,5 +1,5 @@
 package handler
 
 type Handler interface {
-	Perform() error
+	Run(<-chan bool)
 }

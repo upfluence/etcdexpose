@@ -37,7 +37,7 @@ func waitNticks(
 func TestRestart(t *testing.T) {
 	var sync chan error
 	var out <-chan bool
-	watcher := NewWatcher(500 * time.Millisecond)
+	watcher := NewWatcher(500*time.Millisecond, 10)
 
 	for i := 0; i < 10; i++ {
 		sync = make(chan error)

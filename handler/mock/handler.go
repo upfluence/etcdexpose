@@ -2,14 +2,18 @@ package mock
 
 type Handler struct {
 	CallCount int
-	toReturn  error
 }
 
-func NewHandler(err error) *Handler {
-	return &Handler{0, err}
+func NewHandler() *Handler {
+	return &Handler{0}
 }
 
-func (h *Handler) Perform() error {
-	h.CallCount += 1
-	return h.toReturn
+func (h *Handler) Run(in <-chan bool) {
+	go func() {
+		_, ok := <-in
+		if !ok {
+			return
+		}
+		h.CallCount += 1
+	}()
 }

@@ -16,9 +16,9 @@ func TestStartShouldCallHandlerOnStart(t *testing.T) {
 		mock_watcher.NewChanCloser(1 * time.Millisecond),
 	}
 
-	handler := mock_handler.NewHandler(nil)
+	handler := mock_handler.NewHandler()
 
-	runner := NewRunner(handler, watchers)
+	runner := NewRunner(handler, watchers, 10)
 
 	runner.Start()
 
@@ -34,9 +34,9 @@ func TestStartShouldExitOnChanClose(t *testing.T) {
 		mock_watcher.NewChanCloser(500 * time.Millisecond),
 	}
 
-	handler := mock_handler.NewHandler(nil)
+	handler := mock_handler.NewHandler()
 
-	runner := NewRunner(handler, watchers)
+	runner := NewRunner(handler, watchers, 10)
 
 	runner.Start()
 
@@ -54,8 +54,8 @@ func TestStartShouldBeResistantToRestart(t *testing.T) {
 		mock_watcher.NewChanCloser(500 * time.Millisecond),
 	}
 
-	handler := mock_handler.NewHandler(nil)
-	runner := NewRunner(handler, watchers)
+	handler := mock_handler.NewHandler()
+	runner := NewRunner(handler, watchers, 10)
 
 	for i := 0; i < 10; i++ {
 		handler.CallCount = 0

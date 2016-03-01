@@ -9,23 +9,21 @@ import (
 )
 
 type Runner struct {
-	handler  handler.Handler
-	watchers []watcher.Watcher
+	watchers   []watcher.Watcher
+	handler    handler.Handler
+	bufferSize int
 }
 
-func NewRunner(handler handler.Handler, watchers []watcher.Watcher) *Runner {
-	return &Runner{
-		watchers: watchers,
-		handler:  handler,
-	}
+func NewRunner(handler handler.Handler, watchers []watcher.Watcher, bufferSize int) *Runner {
+	return &Runner{watchers, handler, bufferSize}
 }
 
 func (r *Runner) Start() {
-	err := r.handler.Perform()
+	consumerChan := make(chan bool, r.bufferSize)
+	r.handler.Run(consumerChan)
 
-	if err != nil {
-		log.Print(err)
-	}
+	// Init the consumer
+	consumerChan <- true
 
 	eventCases := make([]reflect.SelectCase, len(r.watchers))
 
@@ -47,14 +45,11 @@ func (r *Runner) Start() {
 				"Spotted a chan close at %d, returning\n",
 				chosen,
 			)
+			close(consumerChan)
 			return
 		}
 
-		err := r.handler.Perform()
-
-		if err != nil {
-			log.Println(err)
-		}
+		consumerChan <- true
 	}
 }
 
