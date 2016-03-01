@@ -45,7 +45,7 @@ func (w *watcher) run(watch client.Watcher, ctx context.Context, out chan<- bool
 		_, err := watch.Next(ctx)
 		if err != nil {
 			log.Printf(
-				"Got an error from etcd [%s], closing chan, exiting\n",
+				"Got an error from etcd [%s], closing chan and exiting\n",
 				err,
 			)
 			close(out)

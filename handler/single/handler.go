@@ -1,20 +1,23 @@
 package etcdexpose
 
 import (
+	"github.com/coreos/etcd/client"
+	"github.com/upfluence/etcdexpose/utils"
+
 	"errors"
 	"log"
 )
 
 type SingleValueExpose struct {
-	client      *EtcdClient
-	renderer    *ValueRenderer
-	healthCheck *HealthCheck
+	client      *utils.EtcdClient
+	renderer    *utils.ValueRenderer
+	healthCheck *utils.HealthCheck
 }
 
 func NewSingleValueExpose(
-	client *EtcdClient,
-	renderer *ValueRenderer,
-	healthCheck *HealthCheck,
+	client *utils.EtcdClient,
+	renderer *utils.ValueRenderer,
+	healthCheck *utils.HealthCheck,
 ) *SingleValueExpose {
 	return &SingleValueExpose{
 		client:      client,
@@ -50,8 +53,8 @@ func (s *SingleValueExpose) Perform() error {
 	return nil
 }
 
-func (s *SingleValueExpose) pickNode(nodes etcd.Nodes) *etcd.Node {
-	var pick *etcd.Node = nil
+func (s *SingleValueExpose) pickNode(nodes client.Nodes) *client.Node {
+	var pick *client.Node = nil
 	for _, node := range nodes {
 		err := s.healthCheck.Do(node.Value)
 		if err == nil {

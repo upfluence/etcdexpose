@@ -1,23 +1,24 @@
 package etcdexpose
 
 import (
+	"github.com/coreos/etcd/client"
+	"github.com/upfluence/etcdexpose/utils"
+
 	"errors"
 	"log"
 	"strings"
-
-	"github.com/coreos/go-etcd/etcd"
 )
 
 type MultipleValueExpose struct {
-	client      *EtcdClient
-	renderer    *ValueRenderer
-	healthCheck *HealthCheck
+	client      *utils.EtcdClient
+	renderer    *utils.ValueRenderer
+	healthCheck *utils.HealthCheck
 }
 
 func NewMutlipleValueExpose(
-	client *EtcdClient,
-	renderer *ValueRenderer,
-	healthCheck *HealthCheck,
+	client *utils.EtcdClient,
+	renderer *utils.ValueRenderer,
+	healthCheck *utils.HealthCheck,
 ) *MultipleValueExpose {
 	return &MultipleValueExpose{
 		client:      client,
@@ -53,8 +54,8 @@ func (m *MultipleValueExpose) Perform() error {
 	return nil
 }
 
-func (m *MultipleValueExpose) filterNodes(nodes etcd.Nodes) etcd.Nodes {
-	var selection etcd.Nodes
+func (m *MultipleValueExpose) filterNodes(nodes client.Nodes) client.Nodes {
+	var selection client.Nodes
 	for _, node := range nodes {
 		err := m.healthCheck.Do(node.Value)
 		if err == nil {
@@ -67,7 +68,7 @@ func (m *MultipleValueExpose) filterNodes(nodes etcd.Nodes) etcd.Nodes {
 	return selection
 }
 
-func (m *MultipleValueExpose) formatNodes(nodes etcd.Nodes) (string, error) {
+func (m *MultipleValueExpose) formatNodes(nodes client.Nodes) (string, error) {
 	urls := []string{}
 	for _, node := range nodes {
 		val, err := m.renderer.Perform(node.Value)
