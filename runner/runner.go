@@ -48,7 +48,6 @@ func (r *Runner) Start() {
 			close(consumerChan)
 			return
 		}
-
 		consumerChan <- true
 	}
 }

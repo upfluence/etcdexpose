@@ -1,11 +1,10 @@
 package etcd
 
 import (
-	iface "github.com/upfluence/etcdexpose/watcher"
-	"log"
-
 	"github.com/coreos/etcd/client"
+	iface "github.com/upfluence/etcdexpose/watcher"
 	"golang.org/x/net/context"
+	"log"
 )
 
 type watcher struct {
@@ -27,7 +26,7 @@ func (w *watcher) Start() <-chan bool {
 
 	etcdWatcher := w.keys.Watcher(
 		w.namespace,
-		&client.WatcherOptions{0, false},
+		&client.WatcherOptions{0, true},
 	)
 
 	go w.run(etcdWatcher, ctx, out)

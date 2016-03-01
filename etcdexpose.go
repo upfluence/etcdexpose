@@ -1,16 +1,3 @@
-/*
-   Copyright 2014 Upfluence, Inc.
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-       http://www.apache.org/licenses/LICENSE-2.0
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package main
 
 import (
@@ -21,11 +8,19 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/coreos/go-etcd/etcd"
-	"github.com/upfluence/etcdexpose/etcdexpose"
+	"github.com/coreos/etcd/client"
+
+	mock_handler "github.com/upfluence/etcdexpose/handler/mock"
+	"github.com/upfluence/etcdexpose/runner"
+	"github.com/upfluence/etcdexpose/watcher"
+	"github.com/upfluence/etcdexpose/watcher/etcd"
+	time_watcher "github.com/upfluence/etcdexpose/watcher/time"
 )
 
-const currentVersion = "0.0.10"
+const (
+	currentVersion = "0.1.0-Meh"
+	bufferSize     = 10
+)
 
 var (
 	flagset = flag.NewFlagSet("etcdexpose", flag.ExitOnError)
@@ -126,62 +121,82 @@ func main() {
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, os.Interrupt)
 
-	client := etcd.NewClient([]string{flags.Server})
+	cfg := client.Config{
+		Endpoints:               []string{flags.Server},
+		Transport:               client.DefaultTransport,
+		HeaderTimeoutPerRequest: time.Second,
+	}
 
-	renderer, err := etcdexpose.NewValueRenderer(flags.Template, flags.Port)
+	c, err := client.New(cfg)
 
 	if err != nil {
-		log.Fatalf("Invalid template given")
+		log.Fatal(err)
 	}
 
-	healthCheck := etcdexpose.NewHealthCheck(
-		flags.HealthPath,
-		flags.CheckPort,
-		flags.Retry,
-		flags.RetryDelay,
-		flags.Timeout,
-	)
+	kapi := client.NewKeysAPI(c)
 
-	namespace_client := etcdexpose.NewEtcdClient(
-		client,
-		flags.Namespace,
-		flags.Key,
-		flags.Ttl,
-	)
+	// renderer, err := etcdexpose.NewValueRenderer(flags.Template, flags.Port)
 
-	etcdWatcher := etcdexpose.NewEtcdWatcher(
-		flags.Namespace,
-		client,
-	)
+	// if err != nil {
+	//	log.Fatalf("Invalid template given")
+	//}
 
-	var handler etcdexpose.Handler = nil
+	/*healthCheck := etcdexpose.NewHealthCheck(*/
+	//flags.HealthPath,
+	//flags.CheckPort,
+	//flags.Retry,
+	//flags.RetryDelay,
+	//flags.Timeout,
+	/*)*/
 
-	if flags.Multiple {
-		handler = etcdexpose.NewMutlipleValueExpose(
-			namespace_client,
-			renderer,
-			healthCheck,
-		)
+	/*namespace_client := etcdexpose.NewEtcdClient(*/
+	//client,
+	//flags.Namespace,
+	//flags.Key,
+	//flags.Ttl,
+	/*)*/
 
-	} else {
-		handler = etcdexpose.NewSingleValueExpose(
-			namespace_client,
-			renderer,
-			healthCheck,
-		)
+	/*etcdWatcher := etcdexpose.NewEtcdWatcher(*/
+	//flags.Namespace,
+	//client,
+	/*)*/
+
+	//var handler handler.Handler = nil
+	handler := mock_handler.NewHandler()
+
+	//if flags.Multiple {
+	/*         handler = etcdexpose.NewMutlipleValueExpose(*/
+	//namespace_client,
+	//renderer,
+	//healthCheck,
+	//)
+
+	//} else {
+	/*         handler = etcdexpose.NewSingleValueExpose(*/
+	//namespace_client,
+	//renderer,
+	//healthCheck,
+	/*  )*/
+	//}
+
+	watchers := []watcher.Watcher{
+		etcd.NewWatcher(kapi, flags.Namespace, bufferSize),
 	}
-
-	runner := etcdexpose.NewRunner(handler)
-	runner.AddWatcher(etcdWatcher)
 
 	if flags.Interval > 0 {
-		timeWatcher := etcdexpose.NewTimeWatcher(
-			time.Duration(flags.Interval),
-			time.Second,
+		timeWatcher := time_watcher.NewWatcher(
+			time.Duration(flags.Interval)*time.Second,
+			bufferSize,
 		)
+		watchers = append(watchers, timeWatcher)
 
-		runner.AddWatcher(timeWatcher)
 	}
+
+	runner := runner.NewRunner(
+		handler,
+		watchers,
+		len(watchers)*bufferSize,
+	)
 
 	go func() {
 		s := <-sigch
@@ -191,10 +206,11 @@ func main() {
 	}()
 
 	for {
+		log.Println("Starting runner...")
 		runner.Start()
-		log.Printf("Runner exited, Stopping runner...")
+		log.Println("Runner exited, Stopping...")
 		runner.Stop()
-		log.Printf("waiting 5s ...")
+		log.Println("waiting 5s before retry ...")
 		time.Sleep(5 * time.Second)
 	}
 }

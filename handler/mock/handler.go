@@ -1,5 +1,7 @@
 package mock
 
+import "log"
+
 type Handler struct {
 	CallCount int
 }
@@ -10,10 +12,15 @@ func NewHandler() *Handler {
 
 func (h *Handler) Run(in <-chan bool) {
 	go func() {
-		_, ok := <-in
-		if !ok {
-			return
+		for {
+			_, ok := <-in
+			if !ok {
+				log.Println("EXIT")
+				return
+			}
+
+			log.Println("CALL")
+			h.CallCount += 1
 		}
-		h.CallCount += 1
 	}()
 }
