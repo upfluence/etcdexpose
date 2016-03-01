@@ -27,7 +27,19 @@ func NewMutlipleValueExpose(
 	}
 }
 
-func (m *MultipleValueExpose) Perform() error {
+func (m *MultipleValueExpose) Run(in <-chan bool) {
+	go func() {
+		for {
+			<-in
+			err := m.perform()
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}()
+}
+
+func (m *MultipleValueExpose) perform() error {
 	resp, err := m.client.ReadNamespace()
 	if err != nil {
 		return err

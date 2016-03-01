@@ -26,7 +26,20 @@ func NewSingleValueExpose(
 	}
 }
 
-func (s *SingleValueExpose) Perform() error {
+func (s *SingleValueExpose) Run(in <-chan bool) {
+	go func() {
+		for {
+			<-in
+			err := s.perform()
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}()
+
+}
+
+func (s *SingleValueExpose) perform() error {
 	resp, err := s.client.ReadNamespace()
 	if err != nil {
 		return err
