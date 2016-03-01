@@ -9,18 +9,18 @@ import (
 )
 
 type watcher struct {
-	namespace string
-	keys      client.KeysAPI
-	cancel    context.CancelFunc
+	keys       client.KeysAPI
+	namespace  string
+	bufferSize int
+	cancel     context.CancelFunc
 }
 
-func NewWatcher(namespace string, keys client.KeysAPI) iface.Watcher {
-	return &watcher{namespace, keys, nil}
+func NewWatcher(keys client.KeysAPI, namespace string, bufferSize int) iface.Watcher {
+	return &watcher{keys, namespace, bufferSize, nil}
 }
 
 func (w *watcher) Start() <-chan bool {
-	// Avoid blocking watcher
-	out := make(chan bool, 5)
+	out := make(chan bool, w.bufferSize)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	w.cancel = cancel

@@ -1,4 +1,4 @@
-package etcdexpose
+package runner
 
 import (
 	"log"
@@ -53,7 +53,7 @@ func (r *Runner) Start() {
 		err := r.handler.Perform()
 
 		if err != nil {
-			log.Print(err)
+			log.Println(err)
 		}
 	}
 }

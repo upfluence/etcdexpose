@@ -7,18 +7,20 @@ import (
 )
 
 type watcher struct {
-	interval time.Duration
-	stopChan chan bool
+	interval   time.Duration
+	stopChan   chan bool
+	bufferSize int
 }
 
-func NewWatcher(interval time.Duration) iface.Watcher {
+func NewWatcher(interval time.Duration, bufferSize int) iface.Watcher {
 	return &watcher{
-		interval: interval,
+		interval:   interval,
+		bufferSize: bufferSize,
 	}
 }
 
 func (t *watcher) Start() <-chan bool {
-	out := make(chan bool)
+	out := make(chan bool, t.bufferSize)
 	ticker := time.NewTicker(t.interval)
 	t.stopChan = make(chan bool)
 	go t.run(out, ticker)
