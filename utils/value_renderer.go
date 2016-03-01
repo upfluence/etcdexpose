@@ -1,4 +1,4 @@
-package etcdexpose
+package utils
 
 import (
 	"bytes"

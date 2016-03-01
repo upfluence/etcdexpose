@@ -28,15 +28,15 @@ type urlMembers struct {
 func NewHealthCheck(
 	path string,
 	port, retry uint,
-	retryDelay,
-	timeout time.Duration) (*HealthCheck, error) {
+	retryDelay, timeout time.Duration) (*HealthCheck, error) {
+
 	tmpl, err := template.New("url").Parse(URL_TEMPLATE)
 	if err != nil {
 		return nil, err
 	}
 
 	return &HealthCheck{
-		client:     &http.Client{Timeout: 5 * time.Second},
+		client:     &http.Client{Timeout: timeout},
 		path:       path,
 		tmpl:       tmpl,
 		port:       port,
