@@ -1,4 +1,4 @@
-package etcdexpose
+package multiple
 
 import (
 	"github.com/coreos/etcd/client"

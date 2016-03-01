@@ -10,8 +10,11 @@ import (
 
 	"github.com/coreos/etcd/client"
 
-	mock_handler "github.com/upfluence/etcdexpose/handler/mock"
+	"github.com/upfluence/etcdexpose/handler"
+	"github.com/upfluence/etcdexpose/handler/multiple"
+	"github.com/upfluence/etcdexpose/handler/single"
 	"github.com/upfluence/etcdexpose/runner"
+	"github.com/upfluence/etcdexpose/utils"
 	"github.com/upfluence/etcdexpose/watcher"
 	"github.com/upfluence/etcdexpose/watcher/etcd"
 	time_watcher "github.com/upfluence/etcdexpose/watcher/time"
@@ -36,7 +39,7 @@ var (
 		Retry      uint
 		RetryDelay time.Duration
 		Timeout    time.Duration
-		Ttl        uint64
+		Ttl        time.Duration
 		Port       uint
 		CheckPort  uint
 	}{}
@@ -88,7 +91,7 @@ func init() {
 	flagset.DurationVar(&flags.Timeout, "client-timeout", 5*time.Second, "Client timeout")
 	flagset.DurationVar(&flags.Timeout, "ct", 5*time.Second, "Client timeout")
 
-	flagset.Uint64Var(&flags.Ttl, "ttl", 0, "Key time to live")
+	flagset.DurationVar(&flags.Ttl, "ttl", 0, "Key time to live")
 
 	flagset.UintVar(&flags.Port, "port", 0, "Port to expose")
 	flagset.UintVar(&flags.Port, "p", 0, "Port to expose")
@@ -135,49 +138,47 @@ func main() {
 
 	kapi := client.NewKeysAPI(c)
 
-	// renderer, err := etcdexpose.NewValueRenderer(flags.Template, flags.Port)
+	renderer, err := utils.NewValueRenderer(flags.Template, flags.Port)
 
-	// if err != nil {
-	//	log.Fatalf("Invalid template given")
-	//}
+	if err != nil {
+		log.Fatalf("Invalid template given")
+	}
 
-	/*healthCheck := etcdexpose.NewHealthCheck(*/
-	//flags.HealthPath,
-	//flags.CheckPort,
-	//flags.Retry,
-	//flags.RetryDelay,
-	//flags.Timeout,
-	/*)*/
+	healthCheck, err := utils.NewHealthCheck(
+		flags.HealthPath,
+		flags.CheckPort,
+		flags.Retry,
+		flags.RetryDelay,
+		flags.Timeout,
+	)
 
-	/*namespace_client := etcdexpose.NewEtcdClient(*/
-	//client,
-	//flags.Namespace,
-	//flags.Key,
-	//flags.Ttl,
-	/*)*/
+	if err != nil {
+		log.Fatalf("Invalid format given")
+	}
 
-	/*etcdWatcher := etcdexpose.NewEtcdWatcher(*/
-	//flags.Namespace,
-	//client,
-	/*)*/
+	namespace_client := utils.NewEtcdClient(
+		kapi,
+		flags.Namespace,
+		flags.Key,
+		flags.Ttl,
+	)
 
-	//var handler handler.Handler = nil
-	handler := mock_handler.NewHandler()
+	var handler handler.Handler = nil
 
-	//if flags.Multiple {
-	/*         handler = etcdexpose.NewMutlipleValueExpose(*/
-	//namespace_client,
-	//renderer,
-	//healthCheck,
-	//)
+	if flags.Multiple {
+		handler = multiple.NewMutlipleValueExpose(
+			namespace_client,
+			renderer,
+			healthCheck,
+		)
 
-	//} else {
-	/*         handler = etcdexpose.NewSingleValueExpose(*/
-	//namespace_client,
-	//renderer,
-	//healthCheck,
-	/*  )*/
-	//}
+	} else {
+		handler = single.NewSingleValueExpose(
+			namespace_client,
+			renderer,
+			healthCheck,
+		)
+	}
 
 	watchers := []watcher.Watcher{
 		etcd.NewWatcher(kapi, flags.Namespace, bufferSize),
