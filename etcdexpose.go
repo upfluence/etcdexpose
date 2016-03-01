@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	currentVersion = "0.1.0-Meh"
+	currentVersion = "0.1.0"
 	bufferSize     = 50
 )
 
