@@ -22,7 +22,7 @@ import (
 
 const (
 	currentVersion = "0.1.0-Meh"
-	bufferSize     = 10
+	bufferSize     = 50
 )
 
 var (

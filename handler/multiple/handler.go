@@ -30,7 +30,11 @@ func NewMutlipleValueExpose(
 func (m *MultipleValueExpose) Run(in <-chan bool) {
 	go func() {
 		for {
-			<-in
+			_, ok := <-in
+			if !ok {
+				log.Println("in chan closed, exiting")
+				return
+			}
 			err := m.perform()
 			if err != nil {
 				log.Println(err)
@@ -57,10 +61,10 @@ func (m *MultipleValueExpose) perform() error {
 		return err
 	}
 
-	_, setErr := m.client.WriteValue(val)
+	_, err = m.client.WriteValue(val)
 
-	if setErr != nil {
-		return setErr
+	if err != nil {
+		return err
 	}
 
 	return nil

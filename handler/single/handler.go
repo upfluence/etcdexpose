@@ -29,7 +29,11 @@ func NewSingleValueExpose(
 func (s *SingleValueExpose) Run(in <-chan bool) {
 	go func() {
 		for {
-			<-in
+			_, ok := <-in
+			if !ok {
+				log.Println("in chan closed, exiting")
+				return
+			}
 			err := s.perform()
 			if err != nil {
 				log.Println(err)
