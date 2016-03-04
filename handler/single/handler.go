@@ -1,21 +1,23 @@
-package etcdexpose
+package single
 
 import (
+	"github.com/coreos/etcd/client"
+	"github.com/upfluence/etcdexpose/utils"
+
 	"errors"
-	"github.com/coreos/go-etcd/etcd"
 	"log"
 )
 
 type SingleValueExpose struct {
-	client      *EtcdClient
-	renderer    *ValueRenderer
-	healthCheck *HealthCheck
+	client      *utils.EtcdClient
+	renderer    *utils.ValueRenderer
+	healthCheck *utils.HealthCheck
 }
 
 func NewSingleValueExpose(
-	client *EtcdClient,
-	renderer *ValueRenderer,
-	healthCheck *HealthCheck,
+	client *utils.EtcdClient,
+	renderer *utils.ValueRenderer,
+	healthCheck *utils.HealthCheck,
 ) *SingleValueExpose {
 	return &SingleValueExpose{
 		client:      client,
@@ -24,7 +26,24 @@ func NewSingleValueExpose(
 	}
 }
 
-func (s *SingleValueExpose) Perform() error {
+func (s *SingleValueExpose) Run(in <-chan bool) {
+	go func() {
+		for {
+			_, ok := <-in
+			if !ok {
+				log.Println("in chan closed, exiting")
+				return
+			}
+			err := s.perform()
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}()
+
+}
+
+func (s *SingleValueExpose) perform() error {
 	resp, err := s.client.ReadNamespace()
 	if err != nil {
 		return err
@@ -51,8 +70,8 @@ func (s *SingleValueExpose) Perform() error {
 	return nil
 }
 
-func (s *SingleValueExpose) pickNode(nodes etcd.Nodes) *etcd.Node {
-	var pick *etcd.Node = nil
+func (s *SingleValueExpose) pickNode(nodes client.Nodes) *client.Node {
+	var pick *client.Node = nil
 	for _, node := range nodes {
 		err := s.healthCheck.Do(node.Value)
 		if err == nil {

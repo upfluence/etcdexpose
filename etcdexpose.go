@@ -1,16 +1,3 @@
-/*
-   Copyright 2014 Upfluence, Inc.
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-       http://www.apache.org/licenses/LICENSE-2.0
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package main
 
 import (
@@ -21,11 +8,22 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/coreos/go-etcd/etcd"
-	"github.com/upfluence/etcdexpose/etcdexpose"
+	"github.com/coreos/etcd/client"
+
+	"github.com/upfluence/etcdexpose/handler"
+	"github.com/upfluence/etcdexpose/handler/multiple"
+	"github.com/upfluence/etcdexpose/handler/single"
+	"github.com/upfluence/etcdexpose/runner"
+	"github.com/upfluence/etcdexpose/utils"
+	"github.com/upfluence/etcdexpose/watcher"
+	"github.com/upfluence/etcdexpose/watcher/etcd"
+	time_watcher "github.com/upfluence/etcdexpose/watcher/time"
 )
 
-const currentVersion = "0.0.10"
+const (
+	currentVersion = "0.1.0"
+	bufferSize     = 50
+)
 
 var (
 	flagset = flag.NewFlagSet("etcdexpose", flag.ExitOnError)
@@ -41,7 +39,7 @@ var (
 		Retry      uint
 		RetryDelay time.Duration
 		Timeout    time.Duration
-		Ttl        uint64
+		Ttl        time.Duration
 		Port       uint
 		CheckPort  uint
 	}{}
@@ -93,7 +91,7 @@ func init() {
 	flagset.DurationVar(&flags.Timeout, "client-timeout", 5*time.Second, "Client timeout")
 	flagset.DurationVar(&flags.Timeout, "ct", 5*time.Second, "Client timeout")
 
-	flagset.Uint64Var(&flags.Ttl, "ttl", 0, "Key time to live")
+	flagset.DurationVar(&flags.Ttl, "ttl", 0, "Key time to live")
 
 	flagset.UintVar(&flags.Port, "port", 0, "Port to expose")
 	flagset.UintVar(&flags.Port, "p", 0, "Port to expose")
@@ -126,15 +124,27 @@ func main() {
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, os.Interrupt)
 
-	client := etcd.NewClient([]string{flags.Server})
+	cfg := client.Config{
+		Endpoints:               []string{flags.Server},
+		Transport:               client.DefaultTransport,
+		HeaderTimeoutPerRequest: time.Second,
+	}
 
-	renderer, err := etcdexpose.NewValueRenderer(flags.Template, flags.Port)
+	c, err := client.New(cfg)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	kapi := client.NewKeysAPI(c)
+
+	renderer, err := utils.NewValueRenderer(flags.Template, flags.Port)
 
 	if err != nil {
 		log.Fatalf("Invalid template given")
 	}
 
-	healthCheck := etcdexpose.NewHealthCheck(
+	healthCheck, err := utils.NewHealthCheck(
 		flags.HealthPath,
 		flags.CheckPort,
 		flags.Retry,
@@ -142,58 +152,66 @@ func main() {
 		flags.Timeout,
 	)
 
-	namespace_client := etcdexpose.NewEtcdClient(
-		client,
+	if err != nil {
+		log.Fatalf("Invalid format given")
+	}
+
+	namespace_client := utils.NewEtcdClient(
+		kapi,
 		flags.Namespace,
 		flags.Key,
 		flags.Ttl,
 	)
 
-	etcdWatcher := etcdexpose.NewEtcdWatcher(
-		flags.Namespace,
-		client,
-	)
-
-	var handler etcdexpose.Handler = nil
+	var handler handler.Handler = nil
 
 	if flags.Multiple {
-		handler = etcdexpose.NewMutlipleValueExpose(
+		handler = multiple.NewMutlipleValueExpose(
 			namespace_client,
 			renderer,
 			healthCheck,
 		)
 
 	} else {
-		handler = etcdexpose.NewSingleValueExpose(
+		handler = single.NewSingleValueExpose(
 			namespace_client,
 			renderer,
 			healthCheck,
 		)
 	}
 
-	runner := etcdexpose.NewRunner(handler)
-	runner.AddWatcher(etcdWatcher)
-
-	if flags.Interval > 0 {
-		timeWatcher := etcdexpose.NewTimeWatcher(
-			time.Duration(flags.Interval),
-			time.Second,
-		)
-
-		runner.AddWatcher(timeWatcher)
+	watchers := []watcher.Watcher{
+		etcd.NewWatcher(kapi, flags.Namespace, bufferSize),
 	}
 
+	if flags.Interval > 0 {
+		timeWatcher := time_watcher.NewWatcher(
+			time.Duration(flags.Interval)*time.Second,
+			bufferSize,
+		)
+		watchers = append(watchers, timeWatcher)
+
+	}
+
+	runner := runner.NewRunner(
+		handler,
+		watchers,
+		len(watchers)*bufferSize,
+	)
+
 	go func() {
-		<-sigch
+		s := <-sigch
+		log.Printf("Received signal [%v] stopping application\n", s)
 		runner.Stop()
 		os.Exit(0)
 	}()
 
 	for {
+		log.Println("Starting runner...")
 		runner.Start()
-		log.Printf("Runner exited, Stopping runner...")
+		log.Println("Runner exited, Stopping...")
 		runner.Stop()
-		log.Printf("waiting 5s ...")
+		log.Println("waiting 5s before retry ...")
 		time.Sleep(5 * time.Second)
 	}
 }
